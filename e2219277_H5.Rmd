@@ -1,0 +1,129 @@
+---
+title: "e2219277-H5"
+author: "Behiye Alak"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rvest)
+library(ggplot2)
+library(data.table)
+library(stargazer)
+library(ggmap)
+library(tmaptools)
+library(RColorBrewer)
+library(rworldmap)
+
+#For life expectancy data
+rhtml <- read_html("https://en.wikipedia.org/wiki/List_of_countries_by_life_expectancy")
+
+rtables <- html_nodes(rhtml, "table")
+rtables
+
+lifetable <- html_table(rtables[16], header = T, dec = ".", fill=TRUE)
+lifetable
+class(lifetable)
+
+lifedata <- lifetable[[1]]
+lifedata  <- lifedata[,c(1,4)]
+
+
+colnames(lifedata)[colnames(lifedata) == "Both"] <- "Life Expectancy by the World Health Organization (2015)"
+  
+worldmap1 <- joinCountryData2Map(lifedata ,
+                                 nameJoinColumn = "Country",
+                                 joinCode = "NAME")
+
+colorpalette1 <- RColorBrewer::brewer.pal(10, "RdYlGn")
+
+map1 <- mapCountryData(worldmap1,
+               nameColumnToPlot = "Life Expectancy by the World Health Organization (2015)",
+               catMethod = "fixedwidth",
+               colourPalette = colorpalette1,
+               numCats = 10)
+
+#For education index
+phtml <-  read_html("https://en.wikipedia.org/wiki/Education_Index")
+
+ptables <- html_nodes(phtml, "table")
+ptables
+
+ptable1 <- html_table(ptables[2], header = T, dec = ".", fill=TRUE)
+class(ptable1)
+
+educationtable <- ptable1[[1]]
+educationtable <- educationtable[, c(2,3)]
+
+colnames(educationtable)[colnames(educationtable) == "EducationIndex"] <- "2015 Education Index by Human Development Report 2016"
+
+worldmap2 <- joinCountryData2Map(educationtable ,
+                                 nameJoinColumn = "Country",
+                                 joinCode = "NAME")
+
+colorpalette2 <- RColorBrewer::brewer.pal(10, "PuOr")
+
+map2 <- mapCountryData(worldmap2,
+               nameColumnToPlot = "2015 Education Index by Human Development Report 2016",
+               catMethod = "fixedwidth",
+               colourPalette = colorpalette2,
+               numCats = 10)
+
+```
+
+
+<p style="font-family: times, serif; font-size:25pt; font-style:italic">***The Relationship between Life Expectancy and Education Level***</p>
+
+<p style="font-family: times, serif; font-size:12pt; font-style:italic">***Average life expectancy increases every year. The development level of the country's economy plays a role in this increase and the education levels of developed economies are also high. On the other hand, education level also has an effect on life expectancy. In this article, our aim is to examine the relationship between life expectancy and education level.***</p>
+
+<p style="font-family: times, serif; font-size:12pt; font-style:italic">***First, in economically developed countries people live longer. This is not just because of the money also because of the education level. The reason for this is that before someone has attained their life expectancy, schooling happens, and it changes the life expectancy. More education results in more wealth, and since everything people need to stay healthy - from food to medical care - costs money, wealth increases life expectancy. At the same time, education provides better planning and self-control throughout the rest of their life by improving their cognitive abilities. As a result, education increases wealth and life expectancy.***</p>
+
+<p style="font-family: times, serif; font-size:12pt; font-style:italic">***When we compare countries with each other, the educational opportunities offered by countries with developed economies are high, and the life expectancy of people in these countries is higher than in undeveloped or developing countries.Also, İn a developed country with a high level of education, technology and health services are developed with it and life expectancy is also because diseases can be treated easily. will be high. On the other hand, countries with underdeveloped economies will not be good at low education and technology and healthcare services. For example, most African countries have a much lower education level and also lower life expectancy than in Canada. Also, life expectancy has been increasing more rapidly among the highly educated than among the less educated segments of the population, especially in the Scandinavian countries.  The two graphs show that the education level and life expectancy are highest in Scandinavian countries. Therefore, as the economy develops, the education of the people in that country increases, and it raises their life expectancy.***</p>
+
+<p style="font-family: times, serif; font-size:12pt; font-style:italic">***When we look at the two graphs, we can see the positive relationship between education level and life expectancy. If a country has a developed economy, the level of education also increases, thus increasing life expectancy. If a country's education level is high, its life expectancy increases even if it does not have a developed economy. However, it is very difficult for a country to increase its life expectancy before its education level increases.***</p>
+
+
+
+
+```{r, echo = FALSE, eval = TRUE, warning=F, graph1, fig.width = 15, fig.height = 8}
+map1 <- mapCountryData(worldmap1,
+               nameColumnToPlot = "Life Expectancy by the World Health Organization (2015)",
+               catMethod = "fixedwidth",
+               colourPalette = colorpalette1,
+               numCats = 10)
+```
+
+
+
+``````{r, echo = FALSE, eval = TRUE, warning=F, graph2, fig.width = 15, fig.height = 8}
+years <- c(1996:2021)
+
+#Enflasyon hedeflemesi*
+
+enfhed <- stri_count_fixed(opinions, "enflasyon hedeflemesi")
+enfhed[22] <- 1
+  
+DTW <- data.table(time =years, data = enfhed)
+
+enflabs <- labs(title = "Frequency of the Word 'Enflasyon Hedeflemesi'",
+                 x = "Years", y = "Frequency",
+                 caption = "Figure 1, Source: Annual Economic Programmes, Turkey")
+
+
+
+ggplot(DTW, aes(x=time, y=data,group = 1, color="Exchange Rate")) + 
+  geom_line(size=1.5) + 
+  scale_color_manual(values="Blue4") +
+  theme_minimal() + enflabs + 
+  theme(legend.position = "none")+
+   scale_x_continuous(breaks=seq(1996.00,2020.00,by=1))+
+  theme(plot.caption = element_text(hjust = 0, size = rel(1), color = "gray20"))+
+  geom_vline(xintercept= c(1999,2001,2009,2019), alpha = 0.4,
+             color = "darkgreen", size = 1.8)
+
+```
+
+<p style="font-family: times, serif; font-size:20pt; font-style:italic">Appendix:</p>
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+
+```
